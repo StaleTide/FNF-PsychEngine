@@ -1,6 +1,7 @@
 package states.stages;
 
 import states.stages.objects.*;
+import backend.BaseStage;
 
 class BackStage extends BaseStage
 {
@@ -13,7 +14,7 @@ class BackStage extends BaseStage
 		// Characters are not ready yet on this function, so you can't add things above them yet.
 		// Use createPost() if that's what you want to do.
 		var construction:BGSprite = new BGSprite('backStage',-500,-80,.9,.9);
-		construction.setGraphicSize(Std.int(0.5 * ruins.width));
+		construction.setGraphicSize(Std.int(0.5 * construction.width));
 		construction.updateHitbox();
 		add(construction);
 	}

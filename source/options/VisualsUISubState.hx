@@ -125,6 +125,19 @@ class VisualsUISubState extends BaseOptionsMenu
 			'bool');
 		addOption(option);
 
+		var option:Option = new Option('Show Combo',
+			"If checked, the unused Combo graphic will be displayed",
+			'showCombo',
+			'bool');
+		addOption(option);
+
+		var option:Option = new Option('Ratings Camera:',
+			"What camera should the Ratings and Combo display on?",
+			'ratingCam',
+			'string',
+			['Game', 'Hud']);
+		addOption(option);
+
 		super();
 		add(notes);
 	}
