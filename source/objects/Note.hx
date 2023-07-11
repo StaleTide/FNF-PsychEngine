@@ -74,7 +74,7 @@ class Note extends FlxSprite
 	public static var SUSTAIN_SIZE:Int = 44;
 	public static var swagWidth:Float = 160 * 0.7;
 	public static var colArray:Array<String> = ['purple', 'blue', 'green', 'red'];
-	public static var defaultNoteSkin:String = 'noteSkins/NOTE_assets';
+	public static var defaultNoteSkin(default, never):String = 'noteSkins/NOTE_assets';
 
 	public var noteSplashData:NoteSplashData = {disabled: false, texture: null, antialiasing: !PlayState.isPixelStage, useGlobalShader: false, r: -1, g: -1, b: -1, a: 0.6};
 	public var offsetX:Float = 0;
@@ -416,6 +416,12 @@ class Note extends FlxSprite
 			if (alpha > 0.3)
 				alpha = 0.3;
 		}
+	}
+
+	override public function destroy()
+	{
+		super.destroy();
+		_lastValidChecked = '';
 	}
 
 	public function followStrumNote(myStrum:StrumNote, fakeCrochet:Float, songSpeed:Float = 1)

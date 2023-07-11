@@ -5,7 +5,8 @@ package states;
 // "switch (curStage)", and add your stage to that list.
 
 // If you want to code Events, you can either code it on a Stage file or on PlayState, if you're doing the latter, search for:
-// "function eventPushed" - Only called *one time* when the game loads, use it for precaching
+// "function eventPushed" - Only called *one time* when the game loads, use it for precaching events that use the same assets, no matter the values
+// "function eventPushedUnique" - Called one time per event, use it for precaching events that uses different assets based on its values
 // "function eventEarlyTrigger" - Used for making your event start a few MILLISECONDS earlier
 // "function triggerEvent" - Called when the song hits your event's timestamp, this is probably what you were looking for
 
@@ -469,7 +470,7 @@ class PlayState extends MusicBeatState
 			timeTxt.y += 3;
 		}
 
-		if(ClientPrefs.data.splashSkin != '(DISABLED)')
+		if(ClientPrefs.data.splashSkin != 'Disabled')
 		{
 			var splash:NoteSplash = new NoteSplash(100, 100);
 			grpNoteSplashes.add(splash);
@@ -938,11 +939,11 @@ class PlayState extends MusicBeatState
 						FlxG.sound.play(Paths.sound('intro2' + introSoundsSuffix), 0.6);
 						tick = TWO;
 					case 2:
-						countdownReady = createCountdownSprite(introAlts[1], antialias);
+						countdownSet = createCountdownSprite(introAlts[1], antialias);
 						FlxG.sound.play(Paths.sound('intro1' + introSoundsSuffix), 0.6);
 						tick = ONE;
 					case 3:
-						countdownReady = createCountdownSprite(introAlts[2], antialias);
+						countdownGo = createCountdownSprite(introAlts[2], antialias);
 						FlxG.sound.play(Paths.sound('introGo' + introSoundsSuffix), 0.6);
 						tick = GO;
 					case 4:
@@ -1272,11 +1273,19 @@ class PlayState extends MusicBeatState
 		generatedMusic = true;
 	}
 
+	// called only once per different event (Used for precaching)
 	function eventPushed(event:EventNote) {
+		eventPushedUnique(event);
 		if(eventsPushed.contains(event.event)) {
 			return;
 		}
 
+		stagesFunc(function(stage:BaseStage) stage.eventPushed(event));
+		eventsPushed.push(event.event);
+	}
+
+	// called by every event with the same name
+	function eventPushedUnique(event:EventNote) {
 		switch(event.event) {
 			case "Change Character":
 				var charType:Int = 0;
@@ -1298,9 +1307,7 @@ class PlayState extends MusicBeatState
 				precacheList.set(event.value1, 'sound');
 				Paths.sound(event.value1);
 		}
-
-		stagesFunc(function(stage:BaseStage) stage.eventPushed(event));
-		eventsPushed.push(event.event);
+		stagesFunc(function(stage:BaseStage) stage.eventPushedUnique(event));
 	}
 
 	function eventEarlyTrigger(event:EventNote):Float {
@@ -1321,7 +1328,6 @@ class PlayState extends MusicBeatState
 
 	function makeEvent(event:Array<Dynamic>, i:Int)
 	{
-		var newEventNote:Array<Dynamic> = [event[0], event[1][i][0], event[1][i][1], event[1][i][2]];
 		var subEvent:EventNote = {
 			strumTime: event[0] + ClientPrefs.data.noteOffset,
 			event: event[1][i][0],
@@ -1330,6 +1336,7 @@ class PlayState extends MusicBeatState
 		};
 		eventNotes.push(subEvent);
 		eventPushed(subEvent);
+		callOnLuas('onEventPushed', [subEvent.event, subEvent.value1 != null ? subEvent.value1 : '', subEvent.value2 != null ? subEvent.value2 : '', subEvent.strumTime]);
 	}
 
 	public var skipArrowStartTween:Bool = false; //for lua
@@ -1967,11 +1974,11 @@ class PlayState extends MusicBeatState
 								addCharacterToList(value2, charType);
 							}
 
-							var wasGf:Bool = dad.curCharacter.startsWith('gf');
+							var wasGf:Bool = dad.curCharacter.startsWith('gf-') || dad.curCharacter == 'gf';
 							var lastAlpha:Float = dad.alpha;
 							dad.alpha = 0.00001;
 							dad = dadMap.get(value2);
-							if(!dad.curCharacter.startsWith('gf')) {
+							if(!dad.curCharacter.startsWith('gf-') && dad.curCharacter != 'gf') {
 								if(wasGf && gf != null) {
 									gf.visible = true;
 								}
@@ -1988,8 +1995,7 @@ class PlayState extends MusicBeatState
 						{
 							if(gf.curCharacter != value2)
 							{
-								if(!gfMap.exists(value2))
-								{
+								if(!gfMap.exists(value2)) {
 									addCharacterToList(value2, charType);
 								}
 
@@ -2833,7 +2839,7 @@ class PlayState extends MusicBeatState
 
 			if (!note.isSustainNote)
 			{
-				combo += 1;
+				combo++;
 				if(combo > 9999) combo = 9999;
 				popUpScore(note);
 			}
@@ -2892,7 +2898,7 @@ class PlayState extends MusicBeatState
 	}
 
 	public function spawnNoteSplashOnNote(note:Note) {
-		if(ClientPrefs.data.splashSkin != '(DISABLED)' && note != null) {
+		if(ClientPrefs.data.splashSkin != 'Disabled' && note != null) {
 			var strum:StrumNote = playerStrums.members[note.noteData];
 			if(strum != null)
 				spawnNoteSplash(strum.x, strum.y, note.noteData, note);
@@ -3034,7 +3040,7 @@ class PlayState extends MusicBeatState
 	}
 	#end
 
-	public function callOnLuas(event:String, args:Array<Dynamic> = null, ignoreStops = false, exclusions:Array<String> = null, excludeValues:Array<Dynamic> = null):Dynamic {
+	public function callOnLuas(funcToCall:String, args:Array<Dynamic> = null, ignoreStops = false, exclusions:Array<String> = null, excludeValues:Array<Dynamic> = null):Dynamic {
 		var returnVal = FunkinLua.Function_Continue;
 		#if LUA_ALLOWED
 		if(args == null) args = [];
@@ -3046,7 +3052,7 @@ class PlayState extends MusicBeatState
 			if(exclusions.contains(script.scriptName))
 				continue;
 
-			var myValue:Dynamic = script.call(event, args);
+			var myValue:Dynamic = script.call(funcToCall, args);
 			if(myValue == FunkinLua.Function_StopLua && !ignoreStops)
 				break;
 			
@@ -3091,6 +3097,7 @@ class PlayState extends MusicBeatState
 		setOnLuas('score', songScore);
 		setOnLuas('misses', songMisses);
 		setOnLuas('hits', songHits);
+		setOnLuas('combo', combo);
 
 		var ret:Dynamic = callOnLuas('onRecalculateRating', null, true);
 		if(ret != FunkinLua.Function_Stop)
