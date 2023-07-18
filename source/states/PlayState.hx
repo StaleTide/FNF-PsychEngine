@@ -2387,9 +2387,9 @@ class PlayState extends MusicBeatState
 		comboSpr.x = coolText.x;
 		comboSpr.acceleration.y = FlxG.random.int(200, 300) * playbackRate * playbackRate;
 		comboSpr.velocity.y -= FlxG.random.int(140, 160) * playbackRate;
-		comboSpr.visible = (!ClientPrefs.data.hideHud && showCombo);
-		comboSpr.x += ClientPrefs.data.comboOffset[0];
-		comboSpr.y -= ClientPrefs.data.comboOffset[1];
+		comboSpr.visible = false;
+		comboSpr.x += ClientPrefs.data.comboOffset[4];
+		comboSpr.y -= ClientPrefs.data.comboOffset[5];
 		comboSpr.antialiasing = antialias;
 		comboSpr.y += 60;
 		comboSpr.velocity.x += FlxG.random.int(1, 10) * playbackRate;
@@ -2418,11 +2418,16 @@ class PlayState extends MusicBeatState
 
 		var seperatedScore:Array<Int> = [];
 
-		if(combo >= 1000) {
+		if(combo >= 1000) 
 			seperatedScore.push(Math.floor(combo / 1000) % 10);
+		if(combo >= 100)
+			seperatedScore.push(Math.floor(combo / 100) % 10);
+		if(combo >= 10)
+		{
+			seperatedScore.push(Math.floor(combo / 10) % 10);
+			if (ClientPrefs.data.showCombo && !ClientPrefs.data.hideHud)
+				comboSpr.visible = true;
 		}
-		seperatedScore.push(Math.floor(combo / 100) % 10);
-		seperatedScore.push(Math.floor(combo / 10) % 10);
 		seperatedScore.push(combo % 10);
 
 		var daLoop:Int = 0;
@@ -2452,7 +2457,11 @@ class PlayState extends MusicBeatState
 			else
 				numScore.cameras = [camGame];
 			numScore.screenCenter();
-			numScore.x = coolText.x + (43 * daLoop) - 90 + ClientPrefs.data.comboOffset[2];
+			numScore.x = coolText.x + (43 * daLoop) - 90 + ClientPrefs.data.comboOffset[2] + 86;
+			if(combo >= 10)
+				numScore.x -= 43;
+			if(combo >= 100)
+				numScore.x -= 43;
 			numScore.y += 80 - ClientPrefs.data.comboOffset[3];
 			
 			if (!ClientPrefs.data.comboStacking)
