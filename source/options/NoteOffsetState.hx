@@ -97,6 +97,7 @@ class NoteOffsetState extends MusicBeatState
 			rating.cameras = [camHUD];
 		else
 			rating.cameras = [camGame];
+		rating.antialiasing = ClientPrefs.data.antialiasing;
 		rating.setGraphicSize(Std.int(rating.width * 0.7));
 		rating.updateHitbox();
 		
@@ -124,6 +125,7 @@ class NoteOffsetState extends MusicBeatState
 				numScore.cameras = [camHUD];
 			else
 				numScore.cameras = [camGame];
+			numScore.antialiasing = ClientPrefs.data.antialiasing;
 			numScore.setGraphicSize(Std.int(numScore.width * 0.5));
 			numScore.updateHitbox();
 			comboNums.add(numScore);
