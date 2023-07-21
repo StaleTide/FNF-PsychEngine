@@ -1909,8 +1909,15 @@ class PlayState extends MusicBeatState
 						isCameraOnForcedPos = true;
 						if(flValue1 == null) flValue1 = 0;
 						if(flValue2 == null) flValue2 = 0;
-						camFollow.x = flValue1;
-						camFollow.y = flValue2;
+						if (ClientPrefs.data.smoothCam)
+						{
+							FlxTween.tween(camFollow, {x: flValue1, y: flValue2}, 1, {ease: FlxEase.cubeOut});
+						}
+						else
+						{
+							camFollow.x = flValue1;
+							camFollow.y = flValue2;
+						}	
 					}
 				}
 
@@ -2066,9 +2073,18 @@ class PlayState extends MusicBeatState
 
 		if (gf != null && SONG.notes[sec].gfSection)
 		{
-			camFollow.setPosition(gf.getMidpoint().x, gf.getMidpoint().y);
-			camFollow.x += gf.cameraPosition[0] + girlfriendCameraOffset[0];
-			camFollow.y += gf.cameraPosition[1] + girlfriendCameraOffset[1];
+			if (ClientPrefs.data.smoothCam)
+			{
+				FlxTween.tween(camFollow, {x: gf.getMidpoint().x + (gf.cameraPosition[0] + girlfriendCameraOffset[0]), 
+										   y: gf.getMidpoint().y + (gf.cameraPosition[1] + girlfriendCameraOffset[1])}
+				, 1, {ease: FlxEase.cubeOut});
+			}
+			else
+			{
+				camFollow.setPosition(gf.getMidpoint().x, gf.getMidpoint().y);
+				camFollow.x += gf.cameraPosition[0] + girlfriendCameraOffset[0];
+				camFollow.y += gf.cameraPosition[1] + girlfriendCameraOffset[1];
+			}
 			tweenCamIn();
 			callOnLuas('onMoveCamera', ['gf']);
 			return;
@@ -2084,20 +2100,46 @@ class PlayState extends MusicBeatState
 	{
 		if(isDad)
 		{
-			camFollow.setPosition(dad.getMidpoint().x + 150, dad.getMidpoint().y - 100);
-			camFollow.x += dad.cameraPosition[0] + opponentCameraOffset[0];
-			camFollow.y += dad.cameraPosition[1] + opponentCameraOffset[1];
+			if (ClientPrefs.data.smoothCam && !SONG.notes[curSection].gfSection)
+				{
+					FlxTween.tween(camFollow, {x: dad.getMidpoint().x + 150 + (dad.cameraPosition[0] + opponentCameraOffset[0]), 
+									  		   y: dad.getMidpoint().y - 100 + (dad.cameraPosition[1] + opponentCameraOffset[1])}
+					, 1, {ease: FlxEase.cubeOut});
+				}
+			else
+				{
+					camFollow.setPosition(dad.getMidpoint().x + 150, dad.getMidpoint().y - 100);
+					camFollow.x += dad.cameraPosition[0] + opponentCameraOffset[0];
+					camFollow.y += dad.cameraPosition[1] + opponentCameraOffset[1];
+				}
+			
 			tweenCamIn();
 		}
 		else
 		{
-			camFollow.setPosition(boyfriend.getMidpoint().x - 100, boyfriend.getMidpoint().y - 100);
-			camFollow.x -= boyfriend.cameraPosition[0] - boyfriendCameraOffset[0];
-			camFollow.y += boyfriend.cameraPosition[1] + boyfriendCameraOffset[1];
+			//camFollow.setPosition(boyfriend.getMidpoint().x - 100, boyfriend.getMidpoint().y - 100);
+			if (ClientPrefs.data.smoothCam && !SONG.notes[curSection].gfSection &&
+				camFollow.x != boyfriend.getMidpoint().x - 100 - (boyfriend.cameraPosition[0] - boyfriendCameraOffset[0]) &&
+				camFollow.y != boyfriend.getMidpoint().y - 100 + (boyfriend.cameraPosition[1] + boyfriendCameraOffset[1]))
+			{
+				FlxTween.tween(camFollow, {x: boyfriend.getMidpoint().x - 100 - (boyfriend.cameraPosition[0] - boyfriendCameraOffset[0]), 
+										   y: boyfriend.getMidpoint().y - 100 + (boyfriend.cameraPosition[1] + boyfriendCameraOffset[1])}
+				, 1, {ease: FlxEase.cubeOut});
+				
+			}
+			else
+			{
+				camFollow.setPosition(boyfriend.getMidpoint().x - 100, boyfriend.getMidpoint().y - 100);
+				camFollow.x -= boyfriend.cameraPosition[0] - boyfriendCameraOffset[0];
+				camFollow.y += boyfriend.cameraPosition[1] + boyfriendCameraOffset[1];
+			}
 
 			if (Paths.formatToSongPath(SONG.song) == 'tutorial' && cameraTwn == null && FlxG.camera.zoom != 1)
 			{
-				cameraTwn = FlxTween.tween(FlxG.camera, {zoom: 1}, (Conductor.stepCrochet * 4 / 1000), {ease: FlxEase.elasticInOut, onComplete:
+				cameraTwn = FlxTween.tween(FlxG.camera, {zoom: 1}, (Conductor.stepCrochet * 4 / 1000), {ease: 
+					(
+					if (ClientPrefs.data.smoothCam) FlxEase.cubeOut
+					else FlxEase.elasticInOut), onComplete:
 					function (twn:FlxTween)
 					{
 						cameraTwn = null;
@@ -2109,7 +2151,12 @@ class PlayState extends MusicBeatState
 
 	public function tweenCamIn() {
 		if (Paths.formatToSongPath(SONG.song) == 'tutorial' && cameraTwn == null && FlxG.camera.zoom != 1.3) {
-			cameraTwn = FlxTween.tween(FlxG.camera, {zoom: 1.3}, (Conductor.stepCrochet * 4 / 1000), {ease: FlxEase.elasticInOut, onComplete:
+			
+			cameraTwn = FlxTween.tween(FlxG.camera, {zoom: 1.3}, (Conductor.stepCrochet * 4 / 1000), {
+				ease:
+				(
+				if (ClientPrefs.data.smoothCam) FlxEase.cubeOut
+				else FlxEase.elasticInOut), onComplete:
 				function (twn:FlxTween) {
 					cameraTwn = null;
 				}

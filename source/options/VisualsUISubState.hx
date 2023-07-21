@@ -165,6 +165,12 @@ class VisualsUISubState extends BaseOptionsMenu
 			['Game', 'Hud']);
 		addOption(option);
 
+		var option:Option = new Option('Smooth Camera',
+			"If checked, the camera will move smoothly.",
+			'smoothCam',
+			'bool');
+		addOption(option);
+
 		super();
 		add(notes);
 	}

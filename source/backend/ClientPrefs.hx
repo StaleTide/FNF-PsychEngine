@@ -50,6 +50,7 @@ class SaveVariables {
 	public var comboStacking:Bool = true;
 	public var showCombo:Bool = true;
 	public var ratingCam:String = 'Hud';
+	public var smoothCam:Bool = false;
 	public var gameplaySettings:Map<String, Dynamic> = [
 		'scrollspeed' => 1.0,
 		'scrolltype' => 'multiplicative', 

@@ -223,8 +223,13 @@ class Tank extends BaseStage
 		// Move camera to BF
 		cutsceneHandler.timer(3, function()
 		{
-			camFollow.x += 750;
-			camFollow.y += 100;
+		//	if (ClientPrefs.data.smoothCam)
+		//		FlxTween.tween(camFollow, {x: camFollow.x + 750, y: camFollow.y + 100}, 1, {ease: FlxEase.cubeOut});
+		//	else
+			{
+				camFollow.x += 750;
+				camFollow.y += 100;
+			}
 		});
 
 		// Beep!
@@ -238,8 +243,13 @@ class Tank extends BaseStage
 		// Move camera to Tankman
 		cutsceneHandler.timer(6, function()
 		{
-			camFollow.x -= 750;
-			camFollow.y -= 100;
+		//	if (ClientPrefs.data.smoothCam)
+		//		FlxTween.tween(camFollow, {x: camFollow.x - 750, y: camFollow.y - 100}, 1, {ease: FlxEase.cubeOut});
+		//	else
+			{
+				camFollow.x -= 750;
+				camFollow.y -= 100;
+			}
 
 			// We should just kill you but... what the hell, it's been a boring day... let's see what you've got!
 			tankman.animation.play('killYou', true);
