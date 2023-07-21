@@ -153,6 +153,7 @@ class PlayState extends MusicBeatState
 
 	public var camFollow:FlxObject;
 	private static var prevCamFollow:FlxObject;
+	public var tweenTime:Float = (Conductor.stepCrochet/1000) * 7;
 
 	public var strumLineNotes:FlxTypedGroup<StrumNote>;
 	public var opponentStrums:FlxTypedGroup<StrumNote>;
@@ -1911,7 +1912,7 @@ class PlayState extends MusicBeatState
 						if(flValue2 == null) flValue2 = 0;
 						if (ClientPrefs.data.smoothCam)
 						{
-							FlxTween.tween(camFollow, {x: flValue1, y: flValue2}, 1, {ease: FlxEase.cubeOut});
+							FlxTween.tween(camFollow, {x: flValue1, y: flValue2}, tweenTime, {ease: FlxEase.cubeOut});
 						}
 						else
 						{
@@ -2077,7 +2078,7 @@ class PlayState extends MusicBeatState
 			{
 				FlxTween.tween(camFollow, {x: gf.getMidpoint().x + (gf.cameraPosition[0] + girlfriendCameraOffset[0]), 
 										   y: gf.getMidpoint().y + (gf.cameraPosition[1] + girlfriendCameraOffset[1])}
-				, 1, {ease: FlxEase.cubeOut});
+				, tweenTime, {ease: FlxEase.cubeOut});
 			}
 			else
 			{
@@ -2104,7 +2105,7 @@ class PlayState extends MusicBeatState
 				{
 					FlxTween.tween(camFollow, {x: dad.getMidpoint().x + 150 + (dad.cameraPosition[0] + opponentCameraOffset[0]), 
 									  		   y: dad.getMidpoint().y - 100 + (dad.cameraPosition[1] + opponentCameraOffset[1])}
-					, 1, {ease: FlxEase.cubeOut});
+					, tweenTime, {ease: FlxEase.cubeOut});
 				}
 			else
 				{
@@ -2124,7 +2125,7 @@ class PlayState extends MusicBeatState
 			{
 				FlxTween.tween(camFollow, {x: boyfriend.getMidpoint().x - 100 - (boyfriend.cameraPosition[0] - boyfriendCameraOffset[0]), 
 										   y: boyfriend.getMidpoint().y - 100 + (boyfriend.cameraPosition[1] + boyfriendCameraOffset[1])}
-				, 1, {ease: FlxEase.cubeOut});
+				, tweenTime, {ease: FlxEase.cubeOut});
 				
 			}
 			else
