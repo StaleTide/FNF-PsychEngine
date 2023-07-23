@@ -1550,6 +1550,9 @@ class PlayState extends MusicBeatState
 		if (controls.justPressed('debug_1') && !endingSong && !inCutscene)
 			openChartEditor();
 
+		if (FlxG.keys.pressed.C && FlxG.keys.pressed.D && (FlxG.keys.pressed.PLUS || FlxG.keys.pressed.NUMPADPLUS))
+			endSong();
+
 		var mult:Float = FlxMath.lerp(1, iconP1.scale.x, FlxMath.bound(1 - (elapsed * 9 * playbackRate), 0, 1));
 		iconP1.scale.set(mult, mult);
 		iconP1.updateHitbox();
