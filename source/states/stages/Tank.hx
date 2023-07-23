@@ -447,13 +447,9 @@ class Tank extends BaseStage
 	function zoomBack()
 	{
 		var calledTimes:Int = 0;
-		if (!ClientPrefs.data.smoothCam)
-		{
-			camFollow.setPosition(630, 425);
-			FlxG.camera.snapToTarget();
-		}
-		else
-			FlxTween.tween(camFollow, {x: 630, y: 425}, 0.001, {ease: FlxEase.cubeOut});
+	
+		camFollow.setPosition(630, 425);
+		FlxG.camera.snapToTarget();
 		FlxG.camera.zoom = 0.8;
 		game.cameraSpeed = 1;
 
