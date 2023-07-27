@@ -110,18 +110,18 @@ class Mods
 			for(mod in Mods.getGlobalMods())
 			{
 				var folder:String = Paths.mods(mod + '/' + fileToFind);
-				if(FileSystem.exists(folder)) foldersToCheck.insert(0, folder);
+				if(FileSystem.exists(folder)) foldersToCheck.push(folder);
 			}
 
 			// Then "PsychEngine/mods/" main folder
 			var folder:String = Paths.mods(fileToFind);
-			if(FileSystem.exists(folder)) foldersToCheck.insert(0, Paths.mods(fileToFind));
+			if(FileSystem.exists(folder)) foldersToCheck.push(Paths.mods(fileToFind));
 
 			// And lastly, the loaded mod's folder
 			if(Mods.currentModDirectory != null && Mods.currentModDirectory.length > 0)
 			{
 				var folder:String = Paths.mods(Mods.currentModDirectory + '/' + fileToFind);
-				if(FileSystem.exists(folder)) foldersToCheck.insert(0, folder);
+				if(FileSystem.exists(folder)) foldersToCheck.push(folder);
 			}
 		}
 		#end
@@ -160,6 +160,8 @@ class Mods
 			for (mod in CoolUtil.coolTextFile('modsList.txt'))
 			{
 				//trace('Mod: $mod');
+				if(mod.trim().length < 1) continue;
+
 				var dat = mod.split("|");
 				list.all.push(dat[0]);
 				if (dat[1] == "1")
@@ -185,7 +187,7 @@ class Mods
 			{
 				var dat:Array<String> = mod.split("|");
 				var folder:String = dat[0];
-				if(FileSystem.exists(Paths.mods(folder)) && FileSystem.isDirectory(Paths.mods(folder)) && !added.contains(folder))
+				if(folder.trim().length > 0 && FileSystem.exists(Paths.mods(folder)) && FileSystem.isDirectory(Paths.mods(folder)) && !added.contains(folder))
 				{
 					added.push(folder);
 					list.push([folder, (dat[1] == "1")]);
@@ -198,7 +200,7 @@ class Mods
 		// Scan for folders that aren't on modsList.txt yet
 		for (folder in getModDirectories())
 		{
-			if(FileSystem.exists(Paths.mods(folder)) && FileSystem.isDirectory(Paths.mods(folder)) &&
+			if(folder.trim().length > 0 && FileSystem.exists(Paths.mods(folder)) && FileSystem.isDirectory(Paths.mods(folder)) &&
 			!ignoreModFolders.contains(folder.toLowerCase()) && !added.contains(folder))
 			{
 				added.push(folder);
@@ -214,7 +216,6 @@ class Mods
 			if(fileStr.length > 0) fileStr += '\n';
 			fileStr += values[0] + '|' + (values[1] ? '1' : '0');
 		}
-		//trace(fileStr);
 
 		File.saveContent('modsList.txt', fileStr);
 		updatedOnState = true;
