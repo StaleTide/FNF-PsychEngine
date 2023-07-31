@@ -75,6 +75,8 @@ import psychlua.HScript;
 
 class PlayState extends MusicBeatState
 {
+	var noteRows:Array<Array<Array<Note>>> = [[],[]];
+
 	public static var STRUM_X = 42;
 	public static var STRUM_X_MIDDLESCROLL = -278;
 
@@ -147,6 +149,11 @@ class PlayState extends MusicBeatState
 
 	public var vocals:FlxSound;
 	public var inst:FlxSound;
+
+	public var dadGhostTween:FlxTween = null;
+	public var bfGhostTween:FlxTween = null;
+	public var dadGhost:FlxSprite = null;
+	public var bfGhost:FlxSprite = null;
 
 	public var dad:Character = null;
 	public var gf:Character = null;
@@ -396,6 +403,9 @@ class PlayState extends MusicBeatState
 			introSoundsSuffix = '-pixel';
 		}
 
+		dadGhost = new FlxSprite();
+		bfGhost = new FlxSprite();
+
 		add(gfGroup);
 		add(dadGroup);
 		add(boyfriendGroup);
@@ -449,6 +459,17 @@ class PlayState extends MusicBeatState
 		startCharacterPos(boyfriend);
 		boyfriendGroup.add(boyfriend);
 		startCharacterScripts(boyfriend.curCharacter);
+
+		dadGhost.visible = false;
+		dadGhost.antialiasing = true;
+		dadGhost.alpha = 0.6;
+		dadGhost.scale.copyFrom(dad.scale);
+		dadGhost.updateHitbox();
+		bfGhost.visible = false;
+		bfGhost.antialiasing = true;
+		bfGhost.alpha = 0.6;
+		bfGhost.scale.copyFrom(boyfriend.scale);
+		bfGhost.updateHitbox();
 
 		var camPos:FlxPoint = FlxPoint.get(girlfriendCameraOffset[0], girlfriendCameraOffset[1]);
 		if(gf != null)
@@ -1277,6 +1298,10 @@ class PlayState extends MusicBeatState
 					oldNote = null;
 
 				var swagNote:Note = new Note(daStrumTime, daNoteData, oldNote);
+				swagNote.row = Conductor.secsToRow(daStrumTime);
+				if(noteRows[gottaHitNote?0:1][swagNote.row]==null)
+					noteRows[gottaHitNote?0:1][swagNote.row]=[];
+				noteRows[gottaHitNote ? 0 : 1][swagNote.row].push(swagNote);
 				swagNote.mustPress = gottaHitNote;
 				swagNote.sustainLength = songNotes[2];
 				swagNote.gfNote = (section.gfSection && (songNotes[1]<4));
@@ -2919,8 +2944,46 @@ class PlayState extends MusicBeatState
 
 			if(char != null)
 			{
-				char.playAnim(animToPlay, true);
 				char.holdTimer = 0;
+
+				try{
+					if (!note.isSustainNote
+						&& noteRows[note.mustPress ? 0 : 1][note.row] != null
+						&& noteRows[note.mustPress ? 0 : 1][note.row].length > 1
+						&& note.noteType != "Ghost Note")
+					{
+						// potentially have jump anims?
+						var chord = noteRows[note.mustPress ? 0 : 1][note.row];
+						var animNote = chord[0];
+						var realAnim = singAnimations[Std.int(Math.abs(animNote.noteData))] + altAnim;
+						if (char.mostRecentRow != note.row)
+							char.playAnim(realAnim, true);
+	
+						if(note.nextNote != null && note.prevNote != null){
+							if (note != animNote && !note.nextNote.isSustainNote /* && !note.prevNote.isSustainNote */) {
+								char.playGhostAnim(chord.indexOf(note) - 1, animToPlay, true);
+							}else if(note.nextNote.isSustainNote){
+								char.playAnim(realAnim, true);
+								char.playGhostAnim(chord.indexOf(note) - 1, animToPlay, true);
+
+							}
+
+							trace('${note.prevNote.isSustainNote}  ${note.nextNote.isSustainNote} | ${chord.indexOf(note) - 1}');							
+						}
+	
+							// doGhostAnim('dad', animToPlay);
+	
+						char.mostRecentRow = note.row;
+					}
+					else{
+						if(note.noteType != "Ghost Note")
+							char.playAnim(animToPlay, true);
+						else
+							char.playGhostAnim(note.noteData, animToPlay, true);
+					}
+				}catch(e:haxe.Exception){
+					trace(e);
+				}
 			}
 		}
 
@@ -2985,6 +3048,7 @@ class PlayState extends MusicBeatState
 			health += note.hitHealth * healthGain;
 
 			if(!note.noAnimation) {
+				var altAnim:String = note.animSuffix;
 				var animToPlay:String = singAnimations[Std.int(Math.abs(Math.min(singAnimations.length-1, note.noteData)))];
 
 				var char:Character = boyfriend;
@@ -2997,9 +3061,46 @@ class PlayState extends MusicBeatState
 				
 				if(char != null)
 				{
-					char.playAnim(animToPlay + note.animSuffix, true);
 					char.holdTimer = 0;
-					
+
+					try{
+						if (!note.isSustainNote
+							&& noteRows[note.mustPress ? 0 : 1][note.row] != null
+							&& noteRows[note.mustPress ? 0 : 1][note.row].length > 1
+							&& note.noteType != "Ghost Note")
+						{
+							// potentially have jump anims?
+							var chord = noteRows[note.mustPress ? 0 : 1][note.row];
+							var animNote = chord[0];
+							var realAnim = singAnimations[Std.int(Math.abs(animNote.noteData))] + altAnim;
+							if (char.mostRecentRow != note.row)
+								char.playAnim(realAnim, true);
+							
+							if(note.nextNote != null && note.prevNote != null){
+								if (note != animNote && !note.nextNote.isSustainNote /* && !note.prevNote.isSustainNote */) {
+									char.playGhostAnim(chord.indexOf(note) - 1, animToPlay, true);
+								}else if(note.nextNote.isSustainNote){
+									char.playAnim(realAnim, true);
+									char.playGhostAnim(chord.indexOf(note) - 1, animToPlay, true);
+
+								}
+
+								trace('${note.prevNote.isSustainNote}  ${note.nextNote.isSustainNote} | ${chord.indexOf(note) - 1}');							
+							}
+	
+							// doGhostAnim('dad', animToPlay);
+	
+							char.mostRecentRow = note.row;
+						}
+						else{
+							if(note.noteType != "Ghost Note")
+								char.playAnim(animToPlay, true);
+							else
+								char.playGhostAnim(note.noteData, animToPlay, true);
+						}
+					}catch(e:haxe.Exception){
+						trace(e);
+					}
 					if(note.noteType == 'Hey!') {
 						if(char.animOffsets.exists(animCheck)) {
 							char.playAnim(animCheck, true);

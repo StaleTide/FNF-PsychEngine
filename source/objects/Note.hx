@@ -33,6 +33,8 @@ typedef NoteSplashData = {
 
 class Note extends FlxSprite
 {
+	public var row:Int = 0;
+
 	public var extraData:Map<String, Dynamic> = new Map<String, Dynamic>();
 
 	public var strumTime:Float = 0;
@@ -188,6 +190,9 @@ class Note extends FlxSprite
 					noMissAnimation = true;
 				case 'GF Sing':
 					gfNote = true;
+				case 'Ghost Note':
+					alpha = 0.8;
+					color = 0xffa19f9f;
 			}
 			if (value != null && value.length > 1) NoteTypesConfig.applyNoteTypeData(this, value);
 			if (hitsound != 'hitsound' && ClientPrefs.data.hitsoundVolume > 0) Paths.sound(hitsound); //precache new sound for being idiot-proof
