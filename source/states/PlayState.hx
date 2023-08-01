@@ -185,8 +185,8 @@ class PlayState extends MusicBeatState
 	public var health:Float = 1;
 	public var combo:Int = 0;
 
-	public var healthBar:HealthBar;
-	public var timeBar:HealthBar;
+	public var healthBar:Bar;
+	public var timeBar:Bar;
 	var songPercent:Float = 0;
 
 	public var ratingsData:Array<Rating> = Rating.loadDefault();
@@ -498,7 +498,7 @@ class PlayState extends MusicBeatState
 		if(ClientPrefs.data.downScroll) timeTxt.y = FlxG.height - 44;
 		if(ClientPrefs.data.timeBarType == 'Song Name') timeTxt.text = SONG.song;
 
-		timeBar = new HealthBar(0, timeTxt.y + (timeTxt.height / 4), 'timeBar', function() return songPercent, 0, 1);
+		timeBar = new Bar(0, timeTxt.y + (timeTxt.height / 4), 'timeBar', function() return songPercent, 0, 1);
 		timeBar.scrollFactor.set();
 		timeBar.screenCenter(X);
 		timeBar.alpha = 0;
@@ -543,7 +543,7 @@ class PlayState extends MusicBeatState
 		FlxG.worldBounds.set(0, 0, FlxG.width, FlxG.height);
 		moveCameraSection();
 
-		healthBar = new HealthBar(0, FlxG.height * (!ClientPrefs.data.downScroll ? 0.89 : 0.11), 'healthBar', function() return health, 0, 2);
+		healthBar = new Bar(0, FlxG.height * (!ClientPrefs.data.downScroll ? 0.89 : 0.11), 'healthBar', function() return health, 0, 2);
 		healthBar.screenCenter(X);
 		healthBar.leftToRight = false;
 		healthBar.scrollFactor.set();
@@ -1668,7 +1668,12 @@ class PlayState extends MusicBeatState
 		iconP2.updateHitbox();
 
 		var iconOffset:Int = 26;
-		if (health > 2) health = 2;
+		if (healthBar.bounds.max != null) {
+			if (health > healthBar.bounds.max) health = healthBar.bounds.max;
+		} else {
+			// Old system for safety?? idk
+			if (health > 2) health = 2;
+		}
 		iconP1.x = healthBar.barCenter + (150 * iconP1.scale.x - 150) / 2 - iconOffset;
 		iconP2.x = healthBar.barCenter - (150 * iconP2.scale.x) / 2 - iconOffset * 2;
 		iconP1.animation.curAnim.curFrame = (healthBar.percent < 20) ? 1 : 0;
@@ -2337,7 +2342,7 @@ class PlayState extends MusicBeatState
 		else
 		{
 			var noMissWeek:String = WeekData.getWeekFileName() + '_nomiss';
-			var achieve:String = checkForAchievement([noMissWeek, 'r_ubad', 'ur_good', 'hype', 'two_keys', 'toastie', 'debugger']);
+			var achieve:String = checkForAchievement([noMissWeek, 'ur_bad', 'ur_good', 'hype', 'two_keys', 'toastie', 'debugger']);
 			if(achieve != null) {
 				startAchievement(achieve);
 				return false;
@@ -2696,39 +2701,43 @@ class PlayState extends MusicBeatState
 				var canMiss:Bool = !ClientPrefs.data.ghostTapping;
 
 				// heavily based on my own code LOL if it aint broke dont fix it
-				var pressNotes:Array<Note> = [];
-				var notesStopped:Bool = false;
 				var sortedNotesList:Array<Note> = [];
-				notes.forEachAlive(function(daNote:Note)
+				for (daNote in notes)
 				{
-					if (strumsBlocked[daNote.noteData] != true && daNote.canBeHit && daNote.mustPress &&
+					if (strumsBlocked[daNote.noteData] != true && daNote.exists && daNote.canBeHit && daNote.mustPress &&
 						!daNote.tooLate && !daNote.wasGoodHit && !daNote.isSustainNote && !daNote.blockHit)
 					{
 						if(daNote.noteData == key) sortedNotesList.push(daNote);
 						canMiss = true;
 					}
-				});
+				}
 				sortedNotesList.sort(sortHitNotes);
 
 				if (sortedNotesList.length > 0) {
-					for (epicNote in sortedNotesList)
-					{
-						for (doubleNote in pressNotes) {
+					var epicNote:Note = sortedNotesList[0];
+					if (sortedNotesList.length > 1) {
+						for (bad in 1...sortedNotesList.length)
+						{
+							var doubleNote:Note = sortedNotesList[bad];
+							// no point in jack detection if it isn't a jack
+							if (doubleNote.noteData != epicNote.noteData)
+								break;
+	
 							if (Math.abs(doubleNote.strumTime - epicNote.strumTime) < 1) {
-								doubleNote.kill();
 								notes.remove(doubleNote, true);
 								doubleNote.destroy();
-							} else
-								notesStopped = true;
+								break;
+							} else if (doubleNote.strumTime < epicNote.strumTime)
+							{
+								// replace the note if its ahead of time
+								epicNote = doubleNote; 
+								break;
+							}
 						}
-
-						// eee jack detection before was not super good
-						if (!notesStopped) {
-							goodNoteHit(epicNote);
-							pressNotes.push(epicNote);
-						}
-
 					}
+
+					// eee jack detection before was not super good
+					goodNoteHit(epicNote);
 				}
 				else {
 					callOnScripts('onGhostTap', [key]);
@@ -2770,8 +2779,6 @@ class PlayState extends MusicBeatState
 	{
 		var eventKey:FlxKey = event.keyCode;
 		var key:Int = getKeyFromEvent(keysArray, eventKey);
-		//trace('Pressed: ' + eventKey);
-
 		if(!controls.controllerMode && key > -1) keyReleased(key);
 	}
 
