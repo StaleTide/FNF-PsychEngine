@@ -171,6 +171,13 @@ class VisualsUISubState extends BaseOptionsMenu
 			'bool');
 		addOption(option);
 
+		var option:Option = new Option('Hud Type:',
+			"What type of Hud would you like to use?",
+			'hudType',
+			'string',
+			['Psych', 'Definitive Edition']);
+		addOption(option);
+
 		super();
 		add(notes);
 	}

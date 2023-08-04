@@ -22,9 +22,11 @@ import flixel.FlxObject;
 import flixel.FlxSubState;
 import flixel.addons.transition.FlxTransitionableState;
 import flixel.math.FlxPoint;
+import flixel.math.FlxRect;
 import flixel.util.FlxSort;
 import flixel.util.FlxStringUtil;
 import flixel.util.FlxSave;
+import flixel.ui.FlxBar;
 import flixel.input.keyboard.FlxKey;
 import flixel.animation.FlxAnimationController;
 import lime.utils.Assets;
@@ -186,6 +188,14 @@ class PlayState extends MusicBeatState
 
 	public var healthBar:Bar;
 	public var timeBar:Bar;
+
+	public var coolTimeBar:FlxBar;
+
+	public var coolHealthBar:FlxSprite;
+	public var coolBarLeft:FlxSprite;
+	public var coolBarRight:FlxSprite;
+	public var isCool:Bool = false;
+
 	var songPercent:Float = 0;
 
 	public var ratingsData:Array<Rating> = Rating.loadDefault();
@@ -221,6 +231,22 @@ class PlayState extends MusicBeatState
 	public var scoreTxt:FlxText;
 	var timeTxt:FlxText;
 	var scoreTxtTween:FlxTween;
+
+	var timeTxtLeft:FlxText;
+	var timeTxtRight:FlxText;
+	var songTxt:FlxText;
+
+	public var coolScoreTxt:FlxText;
+	public var coolMissTxt:FlxText;
+	public var coolRatingTxt:FlxText;
+
+	var coolScoreTxtTween:FlxTween;
+	var coolMissTxtTween:FlxTween;
+	var coolRatingTxtTween:FlxTween;
+
+	public var avZoom:Float = .0375;
+	public var cX:Float;
+	public var cY:Float;
 
 	public static var campaignScore:Int = 0;
 	public static var campaignMisses:Int = 0;
@@ -510,6 +536,60 @@ class PlayState extends MusicBeatState
 		uiGroup.add(timeBar);
 		uiGroup.add(timeTxt);
 
+		if(ClientPrefs.data.hudType == 'Definitive Edition') isCool = true;
+
+		if (isCool)
+		{
+			timeTxtLeft = new FlxText(0, FlxG.height - 35, 400, "", 15);
+			timeTxtLeft.setFormat(Paths.font("phantomMuff.ttf"), 20, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+			timeTxtLeft.scrollFactor.set();
+			timeTxtLeft.alpha = 0;
+			timeTxtLeft.borderSize = 2;
+			timeTxtLeft.visible = updateTime = showTime;
+			timeTxtLeft.text = '?:??';
+			timeTxtLeft.antialiasing = true;
+			
+			timeTxtRight = new FlxText(0, FlxG.height - 35, 400, "", 15);
+			timeTxtRight.setFormat(Paths.font("phantomMuff.ttf"), 20, FlxColor.WHITE, RIGHT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+			timeTxtRight.scrollFactor.set();
+			timeTxtRight.alpha = 0;
+			timeTxtRight.borderSize = 2;
+			timeTxtRight.visible = updateTime = showTime;
+			timeTxtRight.text = '?:??';
+			timeTxtRight.antialiasing = true;
+
+			timeTxtLeft.screenCenter(X);
+			timeTxtRight.screenCenter(X);
+
+			timeTxtLeft.x -= 420;
+			timeTxtRight.x += 420;
+
+			songTxt = new FlxText(0, FlxG.height - 35, 400, "", 15);
+			songTxt.setFormat(Paths.font("phantomMuff.ttf"), 20, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+			songTxt.scrollFactor.set();
+			songTxt.alpha = 0;
+			songTxt.borderSize = 2;
+			songTxt.visible = updateTime = showTime;
+			songTxt.text = SONG.song;
+			songTxt.antialiasing = true;
+			songTxt.screenCenter(X);
+
+			coolTimeBar = new FlxBar(0, FlxG.height - 10, LEFT_TO_RIGHT, FlxG.width, 10, this, 'songPercent', 0, 1, true);
+			coolTimeBar.scrollFactor.set();
+			coolTimeBar.screenCenter(X);
+			coolTimeBar.createFilledBar(0xFF000000, 0xFFFFFFFF);
+			coolTimeBar.numDivisions = 800;
+			coolTimeBar.alpha = 0;
+			coolTimeBar.visible = showTime;
+			uiGroup.add(coolTimeBar);
+			uiGroup.add(timeTxtLeft);
+			uiGroup.add(timeTxtRight);
+			uiGroup.add(songTxt);
+
+			timeBar.visible = false;
+			timeTxt.visible = false;
+		}
+
 		strumLineNotes = new FlxTypedGroup<StrumNote>();
 		add(strumLineNotes);
 		add(grpNoteSplashes);
@@ -546,8 +626,8 @@ class PlayState extends MusicBeatState
 
 		FlxG.worldBounds.set(0, 0, FlxG.width, FlxG.height);
 		moveCameraSection();
-
-		healthBar = new Bar(0, FlxG.height * (!ClientPrefs.data.downScroll ? 0.89 : 0.11), 'healthBar', function() return health, 0, 2);
+		
+		healthBar = new Bar(0, FlxG.height * (!ClientPrefs.data.downScroll ? 0.89 : 0.11), 'healthBar', function() return health, 0, 2); //healthBar
 		healthBar.screenCenter(X);
 		healthBar.leftToRight = false;
 		healthBar.scrollFactor.set();
@@ -555,6 +635,36 @@ class PlayState extends MusicBeatState
 		healthBar.alpha = ClientPrefs.data.healthBarAlpha;
 		reloadHealthBarColors();
 		uiGroup.add(healthBar);
+
+		if (isCool){
+			coolHealthBar = new FlxSprite(0, (FlxG.height * (!ClientPrefs.data.downScroll ? 0.89 : 0.11)) - 20).loadGraphic(Paths.image('coolhealthborder'));
+			coolHealthBar.screenCenter(X);
+			coolHealthBar.updateHitbox();
+			coolHealthBar.antialiasing = true;
+			coolHealthBar.visible = !ClientPrefs.data.hideHud;
+			coolHealthBar.alpha = ClientPrefs.data.healthBarAlpha;
+			uiGroup.add(coolHealthBar);
+
+			coolBarLeft = new FlxSprite(0, FlxG.height * (!ClientPrefs.data.downScroll ? 0.89 : 0.11) + 5).loadGraphic(Paths.image('coolhealthbar'));
+			coolBarLeft.screenCenter(X);
+			coolBarLeft.updateHitbox();
+			coolBarLeft.antialiasing = true;
+			coolBarLeft.visible = !ClientPrefs.data.hideHud;
+			coolBarLeft.alpha = ClientPrefs.data.healthBarAlpha;
+			uiGroup.add(coolBarLeft);
+
+			coolBarRight = new FlxSprite(0, FlxG.height * (!ClientPrefs.data.downScroll ? 0.89 : 0.11) + 5).loadGraphic(Paths.image('coolhealthbar'));
+			coolBarRight.screenCenter(X);
+			coolBarRight.updateHitbox();
+			coolBarRight.antialiasing = true;
+			coolBarRight.visible = !ClientPrefs.data.hideHud;
+			coolBarRight.alpha = ClientPrefs.data.healthBarAlpha;
+			uiGroup.add(coolBarRight);
+
+			healthBar.visible = false;
+
+			reloadHealthBarColors();
+		}
 
 		iconP1 = new HealthIcon(boyfriend.healthIcon, true);
 		iconP1.y = healthBar.y - 75;
@@ -576,11 +686,54 @@ class PlayState extends MusicBeatState
 		updateScore(false);
 		uiGroup.add(scoreTxt);
 
+		if (isCool){
+			cX = -10 + (1280 * avZoom);
+			cY = 720 - (720 * avZoom);
+			coolScoreTxt = new FlxText(cX, cY - (26 * 3) - 10, FlxG.width, "", 22);
+			coolScoreTxt.setFormat(Paths.font("phantomMuff.ttf"), 22, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+			coolScoreTxt.scrollFactor.set(0, 0);
+			coolScoreTxt.borderSize = 2;
+			coolScoreTxt.visible = !ClientPrefs.data.hideHud;
+			coolScoreTxt.antialiasing = true;
+			updateCoolScore(0);
+			uiGroup.add(coolScoreTxt);
+
+			coolMissTxt = new FlxText(cX, cY - (26 * 2) - 10, FlxG.width, "", 22);
+			coolMissTxt.setFormat(Paths.font("phantomMuff.ttf"), 22, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+			coolMissTxt.scrollFactor.set(0, 0);
+			coolMissTxt.borderSize = 2;
+			coolMissTxt.visible = !ClientPrefs.data.hideHud;
+			coolMissTxt.antialiasing = true;
+			updateCoolScore(1);
+			uiGroup.add(coolMissTxt);
+
+			coolRatingTxt = new FlxText(cX, cY - (26) - 10, FlxG.width, "", 22);
+			coolRatingTxt.setFormat(Paths.font("phantomMuff.ttf"), 22, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+			coolRatingTxt.scrollFactor.set(0, 0);
+			coolRatingTxt.borderSize = 2;
+			coolRatingTxt.visible = !ClientPrefs.data.hideHud;
+			coolRatingTxt.antialiasing = true;
+			updateCoolScore(2);
+			uiGroup.add(coolRatingTxt);
+
+			scoreTxt.visible = false;
+			coolScoreTxt.wordWrap = false;
+			coolScoreTxt.autoSize = true;
+			coolMissTxt.wordWrap = false;
+			coolMissTxt.autoSize = true;
+			coolRatingTxt.wordWrap = false;
+			coolRatingTxt.autoSize = true;
+		}
+
 		botplayTxt = new FlxText(400, timeBar.y + 55, FlxG.width - 800, "BOTPLAY", 32);
 		botplayTxt.setFormat(Paths.font("vcr.ttf"), 32, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		botplayTxt.scrollFactor.set();
 		botplayTxt.borderSize = 1.25;
+		botplayTxt.antialiasing = true;
 		botplayTxt.visible = cpuControlled;
+		if (isCool){
+			botplayTxt.font = 'phantomMuff.ttf';
+		}
 		uiGroup.add(botplayTxt);
 		if(ClientPrefs.data.downScroll)
 			botplayTxt.y = timeBar.y - 78;
@@ -1173,6 +1326,99 @@ class PlayState extends MusicBeatState
 		callOnScripts('onUpdateScore', [miss]);
 	}
 
+	public function updateCoolScore(?which:Int)
+	{
+		var str:String = ratingName;
+		if(totalPlayed != 0)
+		{
+			var percent:Float = CoolUtil.floorDecimal(ratingPercent * 100, 2);
+			str = '$percent%';
+		}
+
+		//coolScoreTxt.text = 'Score: ' + songScore;
+		//coolMissTxt.text = 'Misses: ' + songMisses;
+		//coolRatingTxt.text = 'Rating: ' + str;
+	
+		if(ClientPrefs.data.scoreZoom)
+		{
+			switch(which){
+				case 0:
+					coolScoreTxt.text = 'Score: ' + songScore;
+					if(coolScoreTxtTween != null) {
+						coolScoreTxtTween.cancel();
+					}
+					coolScoreTxt.scale.x = 1.075;
+					coolScoreTxt.scale.y = 1.075;
+					coolScoreTxtTween = FlxTween.tween(coolScoreTxt.scale, {x: 1, y: 1}, 0.2, {
+					onComplete: function(twn:FlxTween) {
+						coolScoreTxtTween = null;
+					}
+					});
+				case 1:
+					coolMissTxt.text = 'Misses: ' + songMisses;
+					if(coolMissTxtTween != null) {
+						coolMissTxtTween.cancel();
+					}
+					coolMissTxt.scale.x = 1.075;
+					coolMissTxt.scale.y = 1.075;
+					coolMissTxtTween = FlxTween.tween(coolMissTxt.scale, {x: 1, y: 1}, 0.2, {
+					onComplete: function(twn:FlxTween) {
+						coolMissTxtTween = null;
+					}
+					});
+				case 2:
+					coolRatingTxt.text = 'Rating: ' + str;
+					if(coolRatingTxtTween != null) {
+						coolRatingTxtTween.cancel();
+					}
+					coolRatingTxt.scale.x = 1.075;
+					coolRatingTxt.scale.y = 1.075;
+					coolRatingTxtTween = FlxTween.tween(coolRatingTxt.scale, {x: 1, y: 1}, 0.2, {
+					onComplete: function(twn:FlxTween) {
+						coolRatingTxtTween = null;
+					}
+					});
+				case null:
+					if(coolScoreTxtTween != null) {
+						coolScoreTxtTween.cancel();
+					}
+					coolScoreTxt.scale.x = 1.075;
+					coolScoreTxt.scale.y = 1.075;
+					coolScoreTxtTween = FlxTween.tween(coolScoreTxt.scale, {x: 1, y: 1}, 0.2, {
+					onComplete: function(twn:FlxTween) {
+						coolScoreTxtTween = null;
+					}
+					});
+
+					if(coolMissTxtTween != null) {
+						coolMissTxtTween.cancel();
+					}
+					coolMissTxt.scale.x = 1.075;
+					coolMissTxt.scale.y = 1.075;
+					coolMissTxtTween = FlxTween.tween(coolMissTxt.scale, {x: 1, y: 1}, 0.2, {
+					onComplete: function(twn:FlxTween) {
+						coolMissTxtTween = null;
+					}
+					});
+
+					if(coolRatingTxtTween != null) {
+						coolRatingTxtTween.cancel();
+					}
+					coolRatingTxt.scale.x = 1.075;
+					coolRatingTxt.scale.y = 1.075;
+					coolRatingTxtTween = FlxTween.tween(coolRatingTxt.scale, {x: 1, y: 1}, 0.2, {
+					onComplete: function(twn:FlxTween) {
+						coolRatingTxtTween = null;
+					}
+					});
+
+
+			}
+			
+		}
+		//callOnScripts('onUpdateScore', [miss]);
+	}
+
 	public function setSongTime(time:Float)
 	{
 		if(time < 0) time = 0;
@@ -1225,6 +1471,13 @@ class PlayState extends MusicBeatState
 		songLength = FlxG.sound.music.length;
 		FlxTween.tween(timeBar, {alpha: 1}, 0.5, {ease: FlxEase.circOut});
 		FlxTween.tween(timeTxt, {alpha: 1}, 0.5, {ease: FlxEase.circOut});
+		if (isCool)
+		{
+			FlxTween.tween(coolTimeBar, {alpha: 1}, 0.5, {ease: FlxEase.circOut});
+			FlxTween.tween(timeTxtLeft, {alpha: 1}, 0.5, {ease: FlxEase.circOut});
+			FlxTween.tween(timeTxtRight, {alpha: 1}, 0.5, {ease: FlxEase.circOut});
+			FlxTween.tween(songTxt, {alpha: 1}, 0.5, {ease: FlxEase.circOut});
+		}
 
 		#if desktop
 		// Updating Discord Rich Presence (with Time Left)
@@ -1615,6 +1868,22 @@ class PlayState extends MusicBeatState
 
 	override public function update(elapsed:Float)
 	{
+		if (isCool){
+			coolBarLeft.color = FlxColor.fromRGB(dad.healthColorArray[0], dad.healthColorArray[1], dad.healthColorArray[2]);
+			coolBarRight.color = FlxColor.fromRGB(boyfriend.healthColorArray[0], boyfriend.healthColorArray[1], boyfriend.healthColorArray[2]);
+
+			if(coolBarLeft != null){
+				var leftClip = new FlxRect(0, 0, (612 - (health * 306)), coolBarLeft.frameHeight);
+				var rightClip = new FlxRect((612 - (health * 306)), 0, coolBarRight.frameWidth - ((612 - (health * 306))), coolBarRight.frameHeight);
+				coolBarLeft.clipRect = leftClip;
+				coolBarRight.clipRect = rightClip;
+
+				//healthBarBG.visible = false;
+				//healthBar.visible = false;
+				//iconP1.visible = false;
+				//iconP2.visible = false;
+			}
+		}
 		if (FlxG.keys.justPressed.NINE)
 		{
 			iconP1.swapOldIcon();
@@ -1699,11 +1968,23 @@ class PlayState extends MusicBeatState
 			var songCalc:Float = (songLength - curTime);
 			if(ClientPrefs.data.timeBarType == 'Time Elapsed') songCalc = curTime;
 
+			var songLeft:Float = (songLength - curTime);
+
+			var secondsLeft:Int = Math.floor(songLeft / 1000);
+			if(secondsLeft < 0) secondsLeft = 0;
+
 			var secondsTotal:Int = Math.floor(songCalc / 1000);
 			if(secondsTotal < 0) secondsTotal = 0;
 
+			var secondsElapsed:Int = Math.floor(curTime / 1000);
+			//if(secondsElapsed < 0) secondsElapsed = 0;
+
 			if(ClientPrefs.data.timeBarType != 'Song Name')
 				timeTxt.text = FlxStringUtil.formatTime(secondsTotal, false);
+			if (isCool){
+				timeTxtLeft.text = FlxStringUtil.formatTime(secondsLeft, false);
+				timeTxtRight.text = FlxStringUtil.formatTime(secondsElapsed, false);
+			}
 		}
 
 		if (camZooming)
@@ -2838,7 +3119,7 @@ class PlayState extends MusicBeatState
 		var subtract:Float = 0.05;
 		if(note != null) subtract = note.missHealth;
 		health -= subtract * healthLoss;
-
+		
 		if(instakillOnMiss)
 		{
 			vocals.volume = 0;
@@ -2849,6 +3130,7 @@ class PlayState extends MusicBeatState
 		if(!practiceMode) songScore -= 10;
 		if(!endingSong) songMisses++;
 		totalPlayed++;
+		if (isCool) updateCoolScore(1);
 		RecalculateRating(true);
 
 		// play character anims
@@ -3001,6 +3283,11 @@ class PlayState extends MusicBeatState
 				popUpScore(note);
 			}
 			health += note.hitHealth * healthGain;
+			if (isCool){
+				updateCoolScore(0);
+				updateCoolScore(2);
+			}
+			
 
 			if(!note.noAnimation) {
 				var altAnim:String = note.animSuffix;
