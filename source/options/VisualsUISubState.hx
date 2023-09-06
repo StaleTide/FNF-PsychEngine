@@ -178,6 +178,12 @@ class VisualsUISubState extends BaseOptionsMenu
 			['Psych', 'Definitive Edition']);
 		addOption(option);
 
+		var option:Option = new Option('Shift Camera on Note',
+			"If checked, the Camera will move in the direction of a Note pressed.",
+			'shiftCam',
+			'bool');
+		addOption(option);
+
 		super();
 		add(notes);
 	}
