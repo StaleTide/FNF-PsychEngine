@@ -859,7 +859,9 @@ class ModItem extends FlxSpriteGroup
 		this.name = folder;
 		if(pack != null)
 		{
-			if(pack.name != null) this.name = pack.name;
+			if (pack.name != 'Name'){
+				if(pack.name != null) this.name = pack.name;
+			}
 			if(pack.description != null) this.desc = pack.description;
 			if(pack.iconFramerate != null) this.iconFps = pack.iconFramerate;
 			if(pack.color != null)
