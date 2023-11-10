@@ -50,6 +50,7 @@ class SaveVariables {
 	public var smoothCam:Bool = false;
 	public var hudType:String = 'Psych';
 	public var shiftCam:Bool = false;
+	public var doGhost:Bool = true;
 	public var gameplaySettings:Map<String, Dynamic> = [
 		'scrollspeed' => 1.0,
 		'scrolltype' => 'multiplicative', 

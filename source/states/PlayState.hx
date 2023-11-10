@@ -3235,10 +3235,10 @@ class PlayState extends MusicBeatState
 	
 						if(note.nextNote != null && note.prevNote != null){
 							if (note != animNote && !note.nextNote.isSustainNote /* && !note.prevNote.isSustainNote */) {
-								char.playGhostAnim(chord.indexOf(note) - 1, animToPlay, true);
+								if(ClientPrefs.data.doGhost) char.playGhostAnim(chord.indexOf(note) - 1, animToPlay, true);
 							}else if(note.nextNote.isSustainNote){
 								char.playAnim(realAnim, true);
-								char.playGhostAnim(chord.indexOf(note) - 1, animToPlay, true);
+								if(ClientPrefs.data.doGhost) char.playGhostAnim(chord.indexOf(note) - 1, animToPlay, true);
 
 							}
 
@@ -3253,7 +3253,7 @@ class PlayState extends MusicBeatState
 						if(note.noteType != "Ghost Note")
 							char.playAnim(animToPlay, true);
 						else
-							char.playGhostAnim(note.noteData, animToPlay, true);
+							if(ClientPrefs.data.doGhost) char.playGhostAnim(note.noteData, animToPlay, true);
 					}
 					shiftCamNote(true);
 				}catch(e:haxe.Exception){
@@ -3359,10 +3359,10 @@ class PlayState extends MusicBeatState
 							
 							if(note.nextNote != null && note.prevNote != null){
 								if (note != animNote && !note.nextNote.isSustainNote /* && !note.prevNote.isSustainNote */) {
-									char.playGhostAnim(chord.indexOf(note) - 1, animToPlay, true);
+									if(ClientPrefs.data.doGhost) char.playGhostAnim(chord.indexOf(note) - 1, animToPlay, true);
 								}else if(note.nextNote.isSustainNote){
 									char.playAnim(realAnim, true);
-									char.playGhostAnim(chord.indexOf(note) - 1, animToPlay, true);
+									if(ClientPrefs.data.doGhost) char.playGhostAnim(chord.indexOf(note) - 1, animToPlay, true);
 
 								}
 
@@ -3377,7 +3377,7 @@ class PlayState extends MusicBeatState
 							if(note.noteType != "Ghost Note")
 								char.playAnim(animToPlay, true);
 							else
-								char.playGhostAnim(note.noteData, animToPlay, true);
+								if(ClientPrefs.data.doGhost) char.playGhostAnim(note.noteData, animToPlay, true);
 						}
 						shiftCamNote(false);
 					}catch(e:haxe.Exception){

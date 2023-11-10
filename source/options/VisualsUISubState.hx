@@ -184,6 +184,12 @@ class VisualsUISubState extends BaseOptionsMenu
 			'bool');
 		addOption(option);
 
+		var option:Option = new Option('Ghost Animations',
+		"If checked, directional ghost animations will play on doubles/triples/quads.",
+		'doGhost',
+		'bool');
+	addOption(option);
+
 		super();
 		add(notes);
 	}
