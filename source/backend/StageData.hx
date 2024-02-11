@@ -1,7 +1,7 @@
 package backend;
 
 import openfl.utils.Assets;
-import tjson.TJSON as Json;
+import haxe.Json;
 import backend.Song;
 
 typedef StageFile = {
@@ -19,6 +19,8 @@ typedef StageFile = {
 	var camera_opponent:Array<Float>;
 	var camera_girlfriend:Array<Float>;
 	var camera_speed:Null<Float>;
+
+	@:optional var preload:Dynamic;
 }
 
 class StageData {
@@ -103,7 +105,7 @@ class StageData {
 		{
 			return null;
 		}
-		return cast Json.parse(rawJson);
+		return cast tjson.TJSON.parse(rawJson);
 	}
 
 	public static function vanillaSongStage(songName):String
